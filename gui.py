@@ -16,9 +16,11 @@ class GUI:
         self.screen.blit(self.background_image, self.background_rect)
 
 
-class ToolBtns:
+class ToolBtns(pg.sprite.Sprite):
 
     def __init__(self, app, image, hover_image, x, y):
+        self.groups = app.tool_buttons
+        pg.sprite.Sprite.__init__(self, self.groups)
         self.app = app
         self.screen = app.screen
         

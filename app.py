@@ -30,6 +30,7 @@ class Pyxel:
     def new(self):
         """ Initialize variables and do the initial setup """
 
+        self.tool_buttons = pg.sprite.Group()
         self.gui = GUI(self)
         self.load_toolbtns()
         self.canvas = []
@@ -46,7 +47,17 @@ class Pyxel:
             pg.draw.line(self.screen, LIGHTGREY, (0, y), (WIDTH if self.canvas_width == None else self.canvas_width, y))
 
     def load_toolbtns(self):
-        self.pencil_tool = ToolBtns(self, self.pencil_icon, self.pencil_icon_hover, WIDTH - int(WIDTH * 0.2) + 5, 5)
+        x = WIDTH - int(WIDTH * 0.2) + 5
+        self.pencil_tool = ToolBtns(self, self.pencil_icon, self.pencil_icon_hover, x, 5)
+        self.erase_tool = ToolBtns(self, self.pencil_icon, self.pencil_icon_hover, x + 37, 5)
+        self.rectangle_tool = ToolBtns(self, self.pencil_icon, self.pencil_icon_hover, x + 37 + 37, 5)
+        self.circle_tool = ToolBtns(self, self.pencil_icon, self.pencil_icon_hover, x + 37 + 37 + 37, 5)
+
+    def draw_toolbtns(self):
+        self.pencil_tool.draw()
+        self.erase_tool.draw()
+        self.rectangle_tool.draw()
+        self.circle_tool.draw()
 
     def run(self):
         """ App loop """
@@ -70,10 +81,11 @@ class Pyxel:
                 y = event.pos[1] // self.tile_size
                 print(x, y)
                 self.register_pixel(x, y, exists=self.exists(x, y))
-            if self.pencil_tool.rect.collidepoint(pg.mouse.get_pos()):
-                self.pencil_tool.hovered = True
-            else:
-                self.pencil_tool.hovered = False
+            for toolbtns in self.tool_buttons:
+                if toolbtns.rect.collidepoint(pg.mouse.get_pos()):
+                    toolbtns.hovered = True
+                else:
+                    toolbtns.hovered = False
 
     def register_pixel(self, x, y, exists = False):
         """ Register new pixels onto the canvas matrix """
@@ -113,7 +125,7 @@ class Pyxel:
         self.screen.fill(WHITE)
         self.draw_grid()
         self.gui.draw()
-        self.pencil_tool.draw()
+        self.draw_toolbtns()
         self.draw_pixel()
         pg.display.flip()
 
