@@ -7,6 +7,7 @@ class Canvas:
         self.app = app
         self.screen = app.screen
         self.image = pg.Surface((CANVAS_WIDTH, CANVAS_HEIGHT))
+        self.image.convert_alpha()
         self.image.fill(WHITE)
         self.rect = self.image.get_rect(center = app.screen_rect.center)
 
@@ -26,6 +27,6 @@ class Canvas:
         for row, data in enumerate(canvas_data):
             for col, px in enumerate(data):
                 if px:
-                    color = px["color"] if px["status"] else (255, 255, 255)
+                    color = px["color"]
                     rect = pg.Rect(row * self.app.tile_size, col * self.app.tile_size, self.app.tile_size, self.app.tile_size)
                     pg.draw.rect(self.image, color, rect)

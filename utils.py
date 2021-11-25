@@ -4,6 +4,8 @@ class Tools(Enum):
 
     pencil = auto()
     eraser = auto()
+    bucket = auto()
+    select = auto()
 
 
     
