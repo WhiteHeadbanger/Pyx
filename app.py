@@ -100,13 +100,13 @@ class Pyxel:
                 elif event.button == 1 and self.selected_tool.tool_type == Tools.bucket and self.canvas.rect.collidepoint(event.pos):
                     print(x, y)
                     color = self.screen.get_at(event.pos)
-                    neighbors = self.get_neighbor_tile(x, y, color)
+                    neighbors = self.get_surface_to_fill(x, y, color)
                     self.fill(neighbors)
                 elif event.button == 1 and self.selected_tool.tool_type == Tools.select and self.canvas.rect.collidepoint(event.pos):
                     pass
                 # Select a color from the color picker
                 if event.button == 1 and self.gui.rect.collidepoint(event.pos):
-                    self.selected_color = self.get_color(event.pos)
+                    self.selected_color = self.get_color_from_picker(event.pos)
             elif event.type == pg.MOUSEMOTION:
                 
                 # mouse_state = Bool(left, middle, right)
@@ -153,7 +153,7 @@ class Pyxel:
         except IndexError:
             print("Index Error: out of canvas range")
 
-    def get_color(self, pos):
+    def get_color_from_picker(self, pos):
         """ Returns color picker color """
         return self.gui.image.get_at(pos)
 
@@ -164,29 +164,43 @@ class Pyxel:
             for t in p:
                 self.register_pixel(t[0], t[1])
 
-    def get_neighbor_tile(self, xpos, ypos, color):
-        """ Gets the position of neighbor tiles (north, east, south, west) that shares the same colors. """
+    def get_surface_to_fill(self, xpos, ypos, color):
+        
 
         if xpos == None or ypos == None:
             return
 
-        #xpos += 1
-        #ypos += 1
-
         tiles = []
-
         
-        tiles.append(self.horizontal_line(ypos, color))
-        tiles.append(self.vertical_line(xpos, color)) 
+        
+        for y in reversed(range(ypos + 1)):
+            if self.check(xpos, y, color):
+                tiles.append(self.horizontal_line(xpos, y, color))
+                continue
+            break
+        for y in range(ypos, len(self.canvas_grid)):
+            if self.check(xpos, y, color):
+                tiles.append(self.horizontal_line(xpos, y, color))
+                continue
+            break
+        
 
         return tiles
 
-    def horizontal_line(self, ypos, color):
+    def horizontal_line(self, xpos, ypos, color):
         line = []
 
-        for x in range(0, len(self.canvas_grid)):
-            try: point = self.canvas_grid[x][ypos]
-            except IndexError: continue
+        # From starting point to west
+        for x in reversed(range(xpos + 1)):
+            point = self.canvas_grid[x][ypos]
+            if point["color"] == color:
+                line.append((x, ypos))
+            else:
+                break
+
+        # From starting point to east
+        for x in range(xpos, len(self.canvas_grid)):
+            point = self.canvas_grid[x][ypos]
             if point["color"] == color:
                 line.append((x, ypos))
             else:
@@ -194,19 +208,12 @@ class Pyxel:
         
         return line
 
-    def vertical_line(self, xpos, color):
-        line = []
-
-        for y in range(0, len(self.canvas_grid)):
-            try: point = self.canvas_grid[xpos][y]
-            except IndexError: continue
-            if point["color"] == color:
-                line.append((xpos, y))
-            else:
-                break
-
-        return line
-
+    def check(self, xpos, ypos, color):
+        """ Checks for limits """
+        point = self.canvas_grid[xpos][ypos]
+        if point["color"] == color:
+            return True
+        return False
 
 
 
