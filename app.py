@@ -4,11 +4,12 @@ from gui import *
 from canvas import Canvas
 from utils import Tools
 from colorpicker import Picker
+from tools.select import SelectionRect
 
 from os import path
 import sys
 
-class Pyxel:
+class Pyx:
 
     def __init__(self, tile_size: int):
         pg.init()
@@ -54,6 +55,7 @@ class Pyxel:
         self.selected_tool = self.pencil_tool
         self.selected_tool.clicked = True
         self.selected_color = BLACK
+        self.selection_on = False
         self.canvas_grid = []
         for x in range(0, self.tile_size):
             self.canvas_grid.append([])
@@ -89,25 +91,34 @@ class Pyxel:
             if event.type == pg.QUIT:
                 self.quit()
 
-            elif event.type == pg.MOUSEBUTTONDOWN:
+            elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
                 # event.button = (left, middle, right, wheel up, wheel down)
-                if event.button == 1 and self.selected_tool.tool_type == Tools.pencil and self.canvas.rect.collidepoint(event.pos):
+                if self.selected_tool.tool_type == Tools.pencil and self.canvas.rect.collidepoint(event.pos):
                     print(x, y)
                     self.register_pixel(x, y)
-                elif event.button == 1 and self.selected_tool.tool_type == Tools.eraser and self.canvas.rect.collidepoint(event.pos):
+                elif self.selected_tool.tool_type == Tools.eraser and self.canvas.rect.collidepoint(event.pos):
                     print(x, y)
                     self.register_pixel(x, y, draw=False)
-                elif event.button == 1 and self.selected_tool.tool_type == Tools.bucket and self.canvas.rect.collidepoint(event.pos):
+                elif self.selected_tool.tool_type == Tools.bucket and self.canvas.rect.collidepoint(event.pos):
                     print(x, y)
                     color = self.screen.get_at(event.pos)
                     neighbors = self.get_surface_to_fill(x, y, color)
                     self.fill(neighbors)
-                elif event.button == 1 and self.selected_tool.tool_type == Tools.select and self.canvas.rect.collidepoint(event.pos):
-                    pass
+                elif self.selected_tool.tool_type == Tools.select and not self.selection_on and self.canvas.rect.collidepoint(event.pos):
+                    x, y = event.pos
+                    x -= self.canvas.rect.x
+                    y -= self.canvas.rect.y
+                    #x = x // self.tile_size
+                    #y = y // self.tile_size
+                    self.selection = SelectionRect(self, self.canvas.image, (x, y))
+                    self.selection_on = True
                 # Select a color from the color picker
                 if event.button == 1 and self.gui.rect.collidepoint(event.pos):
-                    self.selected_color = self.get_color_from_picker(event.pos)
+                    self.selected_color = self.colorpicker.get_color(event.pos)
             elif event.type == pg.MOUSEMOTION:
+                if self.selection_on and mouse_state[0]:
+                    self.selection.updateRect(event.pos)
+                    self.selection.draw(self.canvas.image)
                 
                 # mouse_state = Bool(left, middle, right)
                 if mouse_state[0] and self.selected_tool.tool_type == Tools.pencil and self.canvas.rect.collidepoint(event.pos):
@@ -116,9 +127,14 @@ class Pyxel:
                 if mouse_state[0] and self.selected_tool.tool_type == Tools.eraser and self.canvas.rect.collidepoint(event.pos):
                     print(x, y)
                     self.register_pixel(x, y, draw=False)
+            elif event.type == pg.MOUSEBUTTONUP and event.button == 1:
+                if self.selection_on:
+                    self.selection_on = False
+                    self.selection.updateRect(event.pos)
+                    #self.selection.hide(self.canvas.image)
+
 
             for btn in self.tool_buttons:
-
                 if btn.rect.collidepoint(pg.mouse.get_pos()):
                     btn.hovered = True
                     if mouse_state[0]:
@@ -153,10 +169,6 @@ class Pyxel:
         except IndexError:
             print("Index Error: out of canvas range")
 
-    def get_color_from_picker(self, pos):
-        """ Returns color picker color """
-        return self.gui.image.get_at(pos)
-
     def fill(self, tiles):
         """ Fills a surface """
         
@@ -174,12 +186,12 @@ class Pyxel:
         
         
         for y in reversed(range(ypos + 1)):
-            if self.check(xpos, y, color):
+            if self.check_color_limits(xpos, y, color):
                 tiles.append(self.horizontal_line(xpos, y, color))
                 continue
             break
         for y in range(ypos, len(self.canvas_grid)):
-            if self.check(xpos, y, color):
+            if self.check_color_limits(xpos, y, color):
                 tiles.append(self.horizontal_line(xpos, y, color))
                 continue
             break
@@ -208,8 +220,9 @@ class Pyxel:
         
         return line
 
-    def check(self, xpos, ypos, color):
-        """ Checks for limits """
+    def check_color_limits(self, xpos, ypos, color):
+        """ checks for color limits """
+
         point = self.canvas_grid[xpos][ypos]
         if point["color"] == color:
             return True
@@ -231,7 +244,7 @@ class Pyxel:
 if __name__ == "__main__":
 
     tile_size = int(input("Tile Size >> "))
-    p = Pyxel(tile_size)
+    p = Pyx(tile_size)
     p.new()
     while True:
         p.run()

@@ -15,3 +15,7 @@ class Picker:
             pg.draw.rect(self.screen, color, (x, y, self.tilesize, self.tilesize))
             x += 40
             
+
+    def get_color(self, pos):
+        """ Returns the color the mouse is pointing at """
+        return self.screen.get_at(pos)

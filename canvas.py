@@ -16,9 +16,9 @@ class Canvas:
         self.screen.blit(self.image, self.rect)
 
     def grid(self):
-        for x in range(0, CANVAS_WIDTH, TILESIZE):
+        for x in range(0, CANVAS_WIDTH, self.app.tile_size):
             pg.draw.line(self.image, LIGHTGREY, (x, 0), (x, self.rect.bottom))
-        for y in range(0, CANVAS_HEIGHT, TILESIZE):
+        for y in range(0, CANVAS_HEIGHT, self.app.tile_size):
             pg.draw.line(self.image, LIGHTGREY, (0, y), (self.rect.right, y))
 
     def draw_pixel(self, canvas_data):
